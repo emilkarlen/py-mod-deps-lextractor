@@ -13,6 +13,7 @@ QModName = Tuple[str, ...]
 def output_dependencies(dependencies: Dict[QModName, Set[QModName]]):
     def render(qn: QModName) -> str:
         return '.'.join(qn)
+
     for src in dependencies.keys():
         for dst in dependencies[src]:
             print(render(src) + ' ' + render(dst))
@@ -48,13 +49,14 @@ class DependenciesReader:
     def _deps_of_file(self, mod_file: Path) -> Tuple[QModName, Set[QModName]]:
         src_mod_name = mod_name_from_path(mod_file.relative_to(self.src_dir))
         mod_file_source = mod_file.read_text()
-        the_ast = ast.parse(mod_file_source)
-        imports_extractor = ImportsExtractor()
-        imports_extractor.visit(the_ast)
-
-        imported_modules = [mod_name_from_str(name) for name in imports_extractor.imports]
-
+        imported_modules = self._extract_imports(mod_file_source)
         return src_mod_name, set([qname for qname in imported_modules if self._is_target(qname)])
+
+    def _extract_imports(self, mod_file_source: str) -> List[QModName]:
+        the_ast = ast.parse(mod_file_source)
+        imports_extractor = ImportsExtractor(self.src_dir, self.targets, self.packages)
+        imports_extractor.visit(the_ast)
+        return imports_extractor.imports
 
     def _is_target(self, module: QModName) -> bool:
         for t in self.targets:
@@ -64,11 +66,18 @@ class DependenciesReader:
 
 
 class ImportsExtractor(ast.NodeVisitor):
-    def __init__(self):
+    def __init__(self,
+                 src_dir: Path,
+                 targets: Set[QModName],
+                 packages: Set[QModName],
+                 ):
+        self.src_dir = src_dir
+        self.targets = targets
+        self.packages = packages
         self.imports = []
 
     def visit_Import(self, node: ast.Import):
-        self.imports += [n.name for n in node.names]
+        self.imports += [mod_name_from_str(n.name) for n in node.names]
 
     def visit_ImportFrom(self, node: ast.ImportFrom):
         pass
