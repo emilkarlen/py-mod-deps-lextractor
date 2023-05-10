@@ -1,4 +1,4 @@
-from typing import List, Tuple, Set, Dict
+from typing import List, Tuple, Set, Dict, Callable
 
 import argparse
 import ast
@@ -19,10 +19,21 @@ def output_dependencies(dependencies: Dict[QModName, Set[QModName]]):
             print(render(src) + ' ' + render(dst))
 
 
+def dbg(packages: Set[QModName], src_dir_targets: Set[QModName], extra_targets: Set[QModName]):
+    sys.stderr.writelines([
+        'packages: ' + str(packages),
+        '\n',
+        'src_dir_targets: ' + str(src_dir_targets),
+        '\n',
+        'extra_targets: ' + str(extra_targets),
+        '\n',
+    ])
+
+
 def main(src_dir: Path, extra_targets: Set[QModName]):
     packages, src_dir_targets, mod_files = read_input_paths(src_dir)
     all_targets = src_dir_targets.union(extra_targets)
-
+    #dbg(packages, src_dir_targets, extra_targets)
     deps_reader = DependenciesReader(src_dir, all_targets, packages)
     dependencies = deps_reader.read(mod_files)
     output_dependencies(dependencies)
@@ -54,9 +65,9 @@ class DependenciesReader:
 
     def _extract_imports(self, mod_file_source: str) -> List[QModName]:
         the_ast = ast.parse(mod_file_source)
-        imports_extractor = ImportsExtractor(self.src_dir, self.targets, self.packages)
+        imports_extractor = ImportsExtractor(self.src_dir, self._is_target, self.packages)
         imports_extractor.visit(the_ast)
-        return imports_extractor.imports
+        return imports_extractor.output
 
     def _is_target(self, module: QModName) -> bool:
         for t in self.targets:
@@ -68,18 +79,37 @@ class DependenciesReader:
 class ImportsExtractor(ast.NodeVisitor):
     def __init__(self,
                  src_dir: Path,
-                 targets: Set[QModName],
+                 is_target: Callable[[QModName], bool],
                  packages: Set[QModName],
                  ):
-        self.src_dir = src_dir
-        self.targets = targets
-        self.packages = packages
-        self.imports = []
+        self._src_dir = src_dir
+        self._is_target = is_target
+        self._packages = packages
+        self.output = []
 
     def visit_Import(self, node: ast.Import):
-        self.imports += [mod_name_from_str(n.name) for n in node.names]
+        self.output += [mod_name_from_str(n.name) for n in node.names]
 
     def visit_ImportFrom(self, node: ast.ImportFrom):
+        if node.level == 0:
+            self._handle_absolute(node)
+        else:
+            self._handle_relative(node)
+
+    def _handle_absolute(self, node: ast.ImportFrom):
+        base = mod_name_from_str(node.module)
+        if not self._is_target(base):
+            return
+        if base in self._packages:
+            rel_names = [mod_name_from_str(name.name) for name in node.names]
+            self.output += [
+                base + rel_name
+                for rel_name in rel_names
+            ]
+        else:
+            self.output.append(base)
+
+    def _handle_relative(self, node: ast.ImportFrom):
         pass
 
 

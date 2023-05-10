@@ -1,0 +1,21 @@
+[act]
+
+@ SUT .
+
+[setup]
+
+def files-source PY_SRC_FILES =
+{
+  file main.py = 'from sys import stdout'
+  dir  pkg =
+  {
+    file __init__.py
+    file pkgmod.py = 'from io import open as my_open'
+  }
+}
+
+dir . += @[PY_SRC_FILES]@
+
+[assert]
+
+stdout is-empty

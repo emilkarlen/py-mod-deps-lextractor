@@ -1,3 +1,7 @@
-[cases]
+[suites]
 
-*.case
+absolute
+
+[setup]
+
+including ../common.xly
