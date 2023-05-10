@@ -1,0 +1,32 @@
+[act]
+
+@ SUT .
+
+[setup]
+
+def files-source PY_SRC_FILES =
+{
+  file main.py        = 'from root_module import *'
+  file root_module.py = 'root_var = 1'
+  dir  pkg =
+  {
+    file __init__.py
+    file pkgmod1.py = 'from pkg.pkgmod2 import *'
+    file pkgmod2.py = 'pkg_var = 2'
+  }
+}
+
+def string EXPECTED_DEPS =
+<<EOF
+main root_module
+pkg.pkgmod1 pkg.pkgmod2
+EOF
+
+dir . += @[PY_SRC_FILES]@
+
+[assert]
+
+stdout
+  -transformed-by
+    @[SORT]@
+    equals @[EXPECTED_DEPS]@

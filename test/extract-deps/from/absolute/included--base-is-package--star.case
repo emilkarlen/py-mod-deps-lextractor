@@ -1,0 +1,47 @@
+[act]
+
+@ SUT .
+
+[setup]
+
+def files-source PY_SRC_FILES =
+{
+  file main.py = 'from pkg1 import *; from pkg2 import *'
+  dir  pkg1 =
+  {
+    file __init__.py
+    file pkgmod1.py = 'from pkg2 import *'
+    file pkgmod2.py
+  }
+  dir  pkg2 =
+  {
+    file __init__.py
+    file pkgmod1.py
+    file pkgmod2.py
+    dir  sub_pkg =
+    {
+      file __init__.py
+    }
+  }
+}
+
+def string EXPECTED_DEPS =
+<<EOF
+main pkg1.pkgmod1
+main pkg1.pkgmod2
+main pkg2.pkgmod1
+main pkg2.pkgmod2
+main pkg2.sub_pkg
+pkg1.pkgmod1 pkg2.pkgmod1
+pkg1.pkgmod1 pkg2.pkgmod2
+pkg1.pkgmod1 pkg2.sub_pkg
+EOF
+
+dir . += @[PY_SRC_FILES]@
+
+[assert]
+
+stdout
+  -transformed-by
+    @[SORT]@
+    equals @[EXPECTED_DEPS]@
