@@ -1,0 +1,23 @@
+# Checks that the test data is valid Python,
+# that can be executed as expected.
+
+[setup]
+
+def path PY_SRC_DIR = @[EXACTLY_HOME]@/testdata
+
+env -of act PYTHONPATH = "@[PY_SRC_DIR]@"
+
+[act]
+
+% python3 @[PY_SRC_DIR]@/main.py
+
+[assert]
+
+exit-code == 0
+
+stderr is-empty
+
+stdout equals <<EOF
+I am mod1
+I am mod2
+EOF

@@ -1,0 +1,28 @@
+[act]
+
+@ SUT .
+
+[setup]
+
+file m1.py =
+<<EOF
+import m2, m3
+EOF
+
+file m2.py =
+<<EOF
+import m3
+EOF
+
+file m3.py
+
+[assert]
+
+stdout
+  -transformed-by @[SORT]@
+    equals
+<<EOF
+m1 m2
+m1 m3
+m2 m3
+EOF

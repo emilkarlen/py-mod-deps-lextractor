@@ -1,0 +1,13 @@
+[cases]
+
+*.case
+
+[assert]
+
+exit-code == 0
+
+stderr is-empty
+
+[setup]
+
+including ../common.xly

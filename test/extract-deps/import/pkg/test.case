@@ -1,0 +1,16 @@
+[act]
+
+@ SUT @[EXACTLY_HOME]@/testdata
+
+[assert]
+
+exit-code == 0
+
+stderr is-empty
+
+stdout
+  -transformed-by
+    @[SORT]@
+    equals
+      -contents-of expected/all-deps.deps
+

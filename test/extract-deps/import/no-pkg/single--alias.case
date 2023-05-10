@@ -1,0 +1,19 @@
+[act]
+
+@ SUT .
+
+[setup]
+
+file m1.py =
+<<EOF
+import m2 as mod_alias
+EOF
+
+file m2.py
+
+[assert]
+
+stdout equals
+<<EOF
+m1 m2
+EOF

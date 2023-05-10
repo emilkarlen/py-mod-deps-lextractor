@@ -1,0 +1,16 @@
+[act]
+
+@ SUT --target pkg .
+
+[setup]
+
+file f.py = <<EOF
+import sys
+import pkg
+EOF
+
+[assert]
+
+stdout equals <<EOF
+f pkg
+EOF

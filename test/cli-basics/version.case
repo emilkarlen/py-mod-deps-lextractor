@@ -1,0 +1,13 @@
+[act]
+
+@ SUT --version
+
+[assert]
+
+exit-code == 0
+
+stderr is-empty
+
+stdout
+  equals
+    -contents-of expected/version-output.txt

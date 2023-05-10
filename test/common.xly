@@ -1,0 +1,9 @@
+[conf]
+
+act-home = ../src
+
+[setup]
+
+def program SUT = -python -existing-file -rel-act-home py-mod-deps-lextractor.py
+
+def text-transformer SORT = run % sort

@@ -1,0 +1,19 @@
+[act]
+
+@ SUT --target pkg1 --target pkg2 .
+
+[setup]
+
+file f.py = <<EOF
+import pkg1
+import pkg2
+EOF
+
+[assert]
+
+stdout
+  -transformed-by run % sort
+    equals <<EOF
+f pkg1
+f pkg2
+EOF
